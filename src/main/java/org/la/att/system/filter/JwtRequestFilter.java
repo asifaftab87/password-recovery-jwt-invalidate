@@ -8,7 +8,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.la.att.system.exception.InvalidTokenException;
 import org.la.att.system.model.BlackListToken;
 import org.la.att.system.service.BlackListTokenService;
 import org.la.att.system.service.CustomUserDetailsService;
@@ -41,10 +40,6 @@ public class JwtRequestFilter extends OncePerRequestFilter{
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 	
-		log.info("-----------------------------------------JwtRequestFilter-------------------------------------"); 
-		
-		
-				
 		final String authorizationHeader = request.getHeader("Authorization");
 		
 		String username = null;
@@ -56,9 +51,11 @@ public class JwtRequestFilter extends OncePerRequestFilter{
 			
 			if(jwt!=null && jwt.length()>0) {
 				
+				//checking logout user
 				List<BlackListToken> blackListToken = blackListTokenService.findByToken(jwt);
 				if(blackListToken!=null && !blackListToken.isEmpty()) {
-					jwtUtil.extractUsername("jwt");
+					//if jwt black listed then intentionally checking wrong token
+					jwtUtil.extractUsername("invalidtoken");
 				}
 				
 				username = jwtUtil.extractUsername(jwt);
