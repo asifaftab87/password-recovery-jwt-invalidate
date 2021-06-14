@@ -63,3 +63,6 @@ here cipherText value is first encrypted using aes algorithm and then encoded us
 logout: localhost:8080/secure/token/invalidate
 
 
+secure url: localhost:8080/secure/user/get/all
+
+Thanks
