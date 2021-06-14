@@ -4,6 +4,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -139,26 +140,21 @@ public class TokenController {
 			throws NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
 					BadPaddingException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException {
 		
-		String scheme = req.getScheme();
-		String serverName = req.getServerName(); 
-		int serverPort = req.getServerPort(); 
-		String contextPath = req.getContextPath();
-		StringBuilder url = new StringBuilder();
-	    url.append(scheme).append("://").append(serverName)
-	    	.append(":").append(serverPort).append(contextPath);
-	    
 		Mail mail = new Mail();
 		mail.setTo(username);
 		mail.setFrom(from);
 		mail.setSubject("Reset Password");
+		
 		/*
 		 * Encrypt jwt
+		 * encode in base64url
 		 */
         SecretKey key = CipherUtil.getKeyFromPassword(password, salt);
         IvParameterSpec ivParameterSpec = new IvParameterSpec(ivParameterSpecValue.getBytes());
         String cipherText = CipherUtil.encrypt(algorithm, jwt, key, ivParameterSpec);
+        String encodedString = Base64.getEncoder().encodeToString(cipherText.getBytes());
         StringBuilder bodyContent = new StringBuilder("<div>");
-        bodyContent.append("<p><a href="+url+"/reset/password?cipherText="+cipherText+">Reset Password</a></p>");
+        bodyContent.append("<p><a href=http://localhost:4200/resetPassword?cipherText="+encodedString+">Reset Password</a></p>");
         int mins = Integer.valueOf(passwordResetExpiryTime)/60000;
         bodyContent.append("<p>Link will expire in <b>"+mins+"</b> minutes</p></div>");
 		mail.setBodyContent(bodyContent.toString());

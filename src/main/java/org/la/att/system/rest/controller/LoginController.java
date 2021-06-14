@@ -1,7 +1,6 @@
 package org.la.att.system.rest.controller;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
@@ -13,7 +12,6 @@ import org.la.att.system.exception.AlreadyExistsException;
 import org.la.att.system.exception.InvalidTokenException;
 import org.la.att.system.model.BlackListToken;
 import org.la.att.system.model.User;
-import org.la.att.system.request.model.AuthenticationRequest;
 import org.la.att.system.service.BlackListTokenService;
 import org.la.att.system.service.CustomUserDetailsService;
 import org.la.att.system.service.UserService;
@@ -72,7 +70,7 @@ public class LoginController {
 	//Cannot access without valid jwt
 	@GetMapping(value = "/user/get/all")
 	public ResponseEntity<Object> get(){
-		return new ResponseEntity(new ArrayList<>(Arrays.asList(1,2,3,4,5)), HttpStatus.OK);
+		return new ResponseEntity<Object>("This is secure page", HttpStatus.OK);
 	}
 	
 	//register user
@@ -91,7 +89,7 @@ public class LoginController {
 
 	//update password
 	@PutMapping(value = "/update/password")
-	public ResponseEntity<Object> updatePassword(@RequestBody AuthenticationRequest user, 
+	public ResponseEntity<Object> updatePassword(@RequestBody String pwd, 
 									@RequestParam(required = true) String cipherText,
 									HttpServletRequest request, HttpServletResponse res) throws Exception {
 		
@@ -100,7 +98,9 @@ public class LoginController {
 		 */
 		SecretKey key = CipherUtil.getKeyFromPassword(password, salt);
         IvParameterSpec ivParameterSpec = new IvParameterSpec(ivParameterSpecValue.getBytes());
-		String jwt = CipherUtil.decrypt(algorithm, cipherText, key, ivParameterSpec);
+        byte[] decodedBytes = Base64.getDecoder().decode(cipherText);
+        String decodedString = new String(decodedBytes);
+        String jwt = CipherUtil.decrypt(algorithm, decodedString, key, ivParameterSpec);
 
 		//checking whether token already used for password update
 		//making jwt one time use 
@@ -115,13 +115,13 @@ public class LoginController {
 			if(jwtTokenUtil.validateToken(jwt, userDetails)) {
 				log.info("valid token");
 				User user2 = userService.findByEmail(username);
-				user2.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+				user2.setPassword(bCryptPasswordEncoder.encode(pwd));
 				user2 = userService.update(user2);
 				if(user2!=null) {
 					//after password update making token black listed
 					BlackListToken blackListToken = new BlackListToken(new Date(), jwt);
 					blackListTokenService.save(blackListToken);
-					return new ResponseEntity<>(jwt, HttpStatus.OK);
+					return new ResponseEntity<>(HttpStatus.OK);
 				}
 			}
 			else {

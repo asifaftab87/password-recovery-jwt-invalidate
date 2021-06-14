@@ -50,7 +50,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 			.and()
 				.authorizeRequests().anyRequest().authenticated();
 	
-		log.info("http method: "+http.toString());
 		http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 	}
 	
